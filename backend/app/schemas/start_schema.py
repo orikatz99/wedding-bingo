@@ -1,5 +1,6 @@
 from pydantic import BaseModel, Field
 from typing import List
+from app.schemas.board_schema import BingoCell
 
 
 class StartRequest(BaseModel):
@@ -10,5 +11,6 @@ class StartResponse(BaseModel):
     user_id: str
     name: str
     board_size: int
-    tasks: List[List[str]]
+    tasks: List[List[BingoCell]]
+
 

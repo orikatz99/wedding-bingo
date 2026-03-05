@@ -1,7 +1,11 @@
 from fastapi import APIRouter
+from app.schemas.board_schema import BingoCell
 from app.schemas.start_schema import StartRequest, StartResponse
 import uuid
 import random
+from app.services.game_state import boards
+from fastapi import HTTPException
+
 
 router = APIRouter()
 
@@ -27,17 +31,21 @@ def root():
 def health():
     return {"status": "ok"}
 
-
+# Endpoint to start a new game
 @router.post("/start", response_model=StartResponse)
 def start_game(payload: StartRequest):
     user_id = str(uuid.uuid4())
     board_size = 3
     flat_tasks = random.sample(TASK_POOL, k=board_size * board_size)
 
+    cells = [BingoCell(task=t) for t in flat_tasks]
+
     grid_tasks = [
-        flat_tasks[i * board_size:(i + 1) * board_size]
+        cells[i * board_size:(i + 1) * board_size]
         for i in range(board_size)
     ]
+
+    boards[user_id] = grid_tasks
 
     return StartResponse(
         user_id=user_id,
@@ -46,3 +54,14 @@ def start_game(payload: StartRequest):
         tasks=grid_tasks
     )
 
+# Endpoint to get the current board state
+@router.get("/board/{user_id}")
+def get_board(user_id: str):
+    if user_id not in boards:
+        raise HTTPException(status_code=404, detail="Board not found")
+
+    return {
+        "user_id": user_id,
+        "board_size": 3,
+        "tasks": boards[user_id]
+    }
