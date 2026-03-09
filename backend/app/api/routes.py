@@ -1,11 +1,12 @@
 from fastapi import APIRouter
 from app.schemas.board_schema import BingoCell
 from app.schemas.start_schema import StartRequest, StartResponse
+from app.schemas.complete_task_schema import CompleteTaskRequest
 import uuid
 import random
 from app.services.game_state import boards
 from fastapi import HTTPException
-
+from datetime import datetime
 
 router = APIRouter()
 
@@ -65,3 +66,25 @@ def get_board(user_id: str):
         "board_size": 3,
         "tasks": boards[user_id]
     }
+
+# Endpoint to complete a task
+@router.post("/complete-task")
+def complete_task(payload: CompleteTaskRequest):
+    if payload.user_id not in boards:
+        raise HTTPException(status_code=404, detail="Board not found")
+
+    board = boards[payload.user_id]
+    cell = board[payload.row][payload.col]
+
+    cell.completed = True
+    cell.image_url = payload.image_url
+    cell.completed_at = datetime.utcnow().isoformat()
+
+    return {
+        "message": "Task marked as completed",
+        "user_id": payload.user_id,
+        "row": payload.row,
+        "col": payload.col,
+        "cell": cell
+    }
+
