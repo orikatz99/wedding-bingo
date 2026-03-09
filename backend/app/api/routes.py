@@ -2,6 +2,7 @@ from fastapi import APIRouter
 from app.schemas.board_schema import BingoCell
 from app.schemas.start_schema import StartRequest, StartResponse
 from app.schemas.complete_task_schema import CompleteTaskRequest
+from app.services.bingo_checker import has_bingo
 import uuid
 import random
 from app.services.game_state import boards
@@ -80,11 +81,14 @@ def complete_task(payload: CompleteTaskRequest):
     cell.image_url = payload.image_url
     cell.completed_at = datetime.utcnow().isoformat()
 
+    is_bingo = has_bingo(board)
+
     return {
-        "message": "Task marked as completed",
-        "user_id": payload.user_id,
-        "row": payload.row,
-        "col": payload.col,
-        "cell": cell
-    }
+    "message": "Task marked as completed",
+    "user_id": payload.user_id,
+    "row": payload.row,
+    "col": payload.col,
+    "cell": cell,
+    "has_bingo": is_bingo
+}
 
