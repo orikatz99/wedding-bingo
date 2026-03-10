@@ -5,7 +5,7 @@ from app.schemas.complete_task_schema import CompleteTaskRequest
 from app.services.bingo_checker import has_bingo
 import uuid
 import random
-from app.services.game_state import boards
+from app.services.game_state import boards, users, winners
 from fastapi import HTTPException
 from datetime import datetime
 
@@ -48,6 +48,7 @@ def start_game(payload: StartRequest):
     ]
 
     boards[user_id] = grid_tasks
+    users[user_id] = payload.name
 
     return StartResponse(
         user_id=user_id,
@@ -82,6 +83,12 @@ def complete_task(payload: CompleteTaskRequest):
     cell.completed_at = datetime.utcnow().isoformat()
 
     is_bingo = has_bingo(board)
+    if is_bingo and payload.user_id not in winners:
+        winners[payload.user_id] = {
+            "user_id": payload.user_id,
+            "name": users[payload.user_id],
+            "bingo_at": datetime.utcnow().isoformat()
+        }
 
     return {
     "message": "Task marked as completed",
@@ -91,4 +98,16 @@ def complete_task(payload: CompleteTaskRequest):
     "cell": cell,
     "has_bingo": is_bingo
 }
+
+# Endpoint to get the leaderboard
+@router.get("/leaderboard")
+def get_leaderboard():
+    leaderboard = list(winners.values())
+    leaderboard.sort(key=lambda winner: winner["bingo_at"])
+
+    return {
+        "count": len(leaderboard),
+        "leaders": leaderboard
+    }
+
 
