@@ -8,6 +8,11 @@ import random
 from app.services.game_state import boards, users, winners
 from fastapi import HTTPException
 from datetime import datetime
+from fastapi import UploadFile, File
+from pathlib import Path
+import shutil
+UPLOAD_DIR = Path("uploads")
+UPLOAD_DIR.mkdir(exist_ok=True)
 
 router = APIRouter()
 
@@ -110,4 +115,18 @@ def get_leaderboard():
         "leaders": leaderboard
     }
 
+# Endpoint to upload an image
+@router.post("/upload")
+async def upload_image(file: UploadFile = File(...)):
+    file_extension = file.filename.split(".")[-1]
+    unique_filename = f"{uuid.uuid4()}.{file_extension}"
+    file_path = UPLOAD_DIR / unique_filename
+
+    with file_path.open("wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    return {
+        "filename": unique_filename,
+        "url": f"/uploads/{unique_filename}"
+    }
 
