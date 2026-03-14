@@ -39,3 +39,15 @@ class BoardTask(Base):
     completed_at = Column(DateTime, nullable=True)
 
     board = relationship("Board", back_populates="tasks")
+
+#winner model
+class Winner(Base):
+    __tablename__ = "winners"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    board_id = Column(Integer, ForeignKey("boards.id"), nullable=False)
+    bingo_at = Column(DateTime, nullable=False)
+
+    user = relationship("User")
+    board = relationship("Board")
