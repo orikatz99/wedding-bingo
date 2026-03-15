@@ -14,7 +14,7 @@ import shutil
 from fastapi import Depends
 from sqlalchemy.orm import Session
 from app.db.session import get_db
-from app.db.models import User
+from app.db.models import User, Board, BoardTask
 UPLOAD_DIR = Path("uploads")
 UPLOAD_DIR.mkdir(exist_ok=True)
 
@@ -42,15 +42,9 @@ def root():
 def health():
     return {"status": "ok"}
 
-# Endpoint to start a new game
 @router.post("/start", response_model=StartResponse)
 def start_game(payload: StartRequest, db: Session = Depends(get_db)):
     user_id = str(uuid.uuid4())
-    new_user = User(guest_name=payload.name)
-    db.add(new_user)
-    db.commit()
-    db.refresh(new_user)
-
     board_size = 3
     flat_tasks = random.sample(TASK_POOL, k=board_size * board_size)
 
@@ -60,6 +54,31 @@ def start_game(payload: StartRequest, db: Session = Depends(get_db)):
         cells[i * board_size:(i + 1) * board_size]
         for i in range(board_size)
     ]
+
+    new_user = User(guest_name=payload.name)
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+
+    new_board = Board(user_id=new_user.id)
+    db.add(new_board)
+    db.commit()
+    db.refresh(new_board)
+
+    for row_index, row in enumerate(grid_tasks):
+        for col_index, cell in enumerate(row):
+            new_task = BoardTask(
+                board_id=new_board.id,
+                task_text=cell.task,
+                row=row_index,
+                col=col_index,
+                is_completed=False,
+                image_url=None,
+                completed_at=None
+            )
+            db.add(new_task)
+
+    db.commit()
 
     boards[user_id] = grid_tasks
     users[user_id] = payload.name
