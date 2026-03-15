@@ -42,7 +42,7 @@ def root():
 def health():
     return {"status": "ok"}
 
-
+# Endpoint to start a new game and create a bingo board for the user
 @router.post("/start", response_model=StartResponse)
 def start_game(payload: StartRequest, db: Session = Depends(get_db)):
     board_size = 3
@@ -88,6 +88,7 @@ def start_game(payload: StartRequest, db: Session = Depends(get_db)):
     )
 
 
+# Endpoint to get the current state of the user's bingo board
 @router.get("/board/{user_id}")
 def get_board(user_id: str, db: Session = Depends(get_db)):
     try:
@@ -127,6 +128,7 @@ def get_board(user_id: str, db: Session = Depends(get_db)):
     }
 
 
+# Endpoint to mark a task as completed and check for bingo
 @router.post("/complete-task")
 def complete_task(payload: CompleteTaskRequest, db: Session = Depends(get_db)):
     try:
@@ -212,6 +214,7 @@ def complete_task(payload: CompleteTaskRequest, db: Session = Depends(get_db)):
     }
 
 
+# Endpoint to get the leaderboard of winners
 @router.get("/leaderboard")
 def get_leaderboard(db: Session = Depends(get_db)):
     winners = db.query(Winner).order_by(Winner.bingo_at.asc()).all()
@@ -233,6 +236,7 @@ def get_leaderboard(db: Session = Depends(get_db)):
     }
 
 
+# Endpoint to upload an image for a completed task
 @router.post("/upload")
 async def upload_image(file: UploadFile = File(...)):
     file_extension = file.filename.split(".")[-1]
